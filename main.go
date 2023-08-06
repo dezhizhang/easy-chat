@@ -1,7 +1,10 @@
 package main
 
-import "fmt"
+import "im/router"
 
 func main() {
-	fmt.Println("hello")
+	engine := router.Router()
+
+	engine.Run(":8000")
+
 }
