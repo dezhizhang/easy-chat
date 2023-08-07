@@ -15,6 +15,7 @@ func Router() *gin.Engine {
 	{
 		v1.GET("/user", controller.GetUser)
 		v1.POST("/user/create", controller.CreateUser)
+		v1.GET("/user/delete", controller.DeleteUser)
 	}
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 	return r
