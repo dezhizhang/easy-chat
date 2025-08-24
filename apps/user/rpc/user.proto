@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package user;
+
+option go_package = "./user";
+
+message User{
+  string id = 1; // 用户id
+  string avatar = 2; // 头像
+  string username = 3; // 用户名
+  string phone = 4; // 手机号
+  int32 status = 5; // 是否锁住
+  int32 sex = 6; // 性别
+}
+
+message Request {
+  string ping = 1;
+}
+
+message Response {
+  string pong = 1;
+}
+
+message LoginReq {
+  string phone = 1;
+  string password = 2;
+}
+
+message LoginResp {
+  string token = 1;
+  int64 expire = 2;
+}
+
+message RegisterReq {
+  string phone = 1;
+  string username = 2;
+  string password = 3;
+  string avatar = 4;
+  int32  sex = 5;
+
+}
+
+message RegisterResp{
+  string token = 1;
+  int64 expire = 2;
+}
+
+message UserInfoReq{
+  string id = 1;
+}
+
+message UserInfoResp{
+  User user = 1;
+}
+
+
+service user{
+  // Ping 测试是否通的服务
+  rpc Ping(Request) returns(Response);
+  // Login 用户用户登录
+  rpc Login(LoginReq) returns(LoginResp);
+  // Register 用户注册
+  rpc Register(RegisterReq) returns(RegisterResp);
+  // GetUserInfo 获取用户信息
+  rpc GetUserInfo(UserInfoReq) returns(UserInfoResp);
+}
