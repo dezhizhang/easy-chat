@@ -37,12 +37,6 @@ go.sum
 .DS_Store
 Thumbs.db
 
-# go-zero specific
-etc/
-*.yaml
-*.yml
-*.json
-
 # Docker & Env
 .env
 docker-compose.override.yml
