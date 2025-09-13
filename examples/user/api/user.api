@@ -1,5 +1,15 @@
 syntax = "v1"
 
+type CreateReq {
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
+}
+
+type CreateResp {
+	Msg string `json:"msg"`
+}
+
 type UserReq {
 	Id string `json:"id"`
 }
@@ -11,7 +21,12 @@ type UserResp {
 }
 
 service User {
-	@handler GetUser
+	// createUser 添加用户
+	@handler createUser
+	post /user (CreateReq) returns (CreateResp)
+
+	// getUser 获取用户
+	@handler getUser
 	get /user (UserReq) returns (UserResp)
 }
 

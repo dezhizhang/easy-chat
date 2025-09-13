@@ -104,19 +104,20 @@ func NewServiceContext(c config.Config) *ServiceContext {
 ```
 
 ### 4. api服务逻辑层调用rpc服务
+
 ```go
 // GetUser 获取用户信息
 func (l *GetUserLogic) GetUser(req *types.UserReq) (resp *types.UserResp, err error) {
 
-	user, err := l.svcCtx.User.GetUser(l.ctx, &userclient.UserReq{Id: req.Id})
-	if err != nil {
-		return nil, err
-	}
-	return &types.UserResp{
-		Id:    user.Id,
-		Name:  user.Name,
-		Phone: user.Phone,
-	}, nil
+user, err := l.svcCtx.User.GetUser(l.ctx, &userclient.UserReq{Id: req.Id})
+if err != nil {
+return nil, err
+}
+return &types.UserResp{
+Id:    user.Id,
+Name:  user.Name,
+Phone: user.Phone,
+}, nil
 }
 
 ```
@@ -124,19 +125,22 @@ func (l *GetUserLogic) GetUser(req *types.UserReq) (resp *types.UserResp, err er
 ## rpc 服务响应api服务
 
 ### 1. 逻辑层响应api服务
+
 ```go
 // GetUser rpc 服务处理逻辑
 func (l *GetUserLogic) GetUser(in *user.UserReq) (*user.UserResp, error) {
-    return &user.UserResp{
-        Id:    "123456",
-        Name:  "tom",
-        Phone: "159924****8",
-    }, nil
+return &user.UserResp{
+Id:    "123456",
+Name:  "tom",
+Phone: "159924****8",
+}, nil
 }
 ```
+
 ## 数据库的操作
 
 ### 1. 编写操作的sql文件并生成对应的操作数据库接口
+
 ```bash
 CREATE TABLE `users`
 (
@@ -151,11 +155,14 @@ CREATE TABLE `users`
     PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
+
 ```bash
 # -c是增加缓存
 goctl model mysql ddl -src user.sql -dir . -c 
 ```
+
 ### 2. proto文件增加添加用户接口
+
 ```protobuf
 syntax = "proto3";
 
@@ -192,12 +199,15 @@ service User{
 
 }
 ```
+
 ### 3. 生成对应的rpc接口
+
 ```bash
 goctl rpc protoc user.proto --go_out=. --go-grpc_out=. --zrpc_out=.  #通过proto生成服务
 ```
 
-### 3. 添加etc请求配置
+### 4. 添加etc请求配置
+
 ```yaml
 Name: user.rpc
 ListenOn: 0.0.0.0:8080
@@ -216,7 +226,9 @@ Cache:
     Pass:
 
 ```
-### 4. 添加配置结构体
+
+### 5. 添加配置结构体
+
 ```go
 package config
 
@@ -236,7 +248,9 @@ type Config struct {
 }
 
 ```
-### 5. 添加svc 上下文
+
+### 6. 添加svc 上下文
+
 ```go
 package svc
 
@@ -261,21 +275,85 @@ func NewServiceContext(c config.Config) *ServiceContext {
 	}
 }
 ```
-### 6. logic增加用户逻辑
+
+### 7. logic增加用户逻辑
+
 ```go
 // CreateUser  创建用户信息
 func (l *CreateUserLogic) CreateUser(in *user.CreateReq) (*user.CreateResp, error) {
-	_, err := l.svcCtx.UserModel.Insert(l.ctx, &model.Users{
-		Id:    in.Id,
-		Name:  in.Name,
-		Phone: in.Phone,
-	})
+_, err := l.svcCtx.UserModel.Insert(l.ctx, &model.Users{
+Id:    in.Id,
+Name:  in.Name,
+Phone: in.Phone,
+})
 
+if err != nil {
+return nil, err
+}
+
+return &user.CreateResp{Msg: "ok"}, nil
+}
+
+```
+
+## api 服务调用rpc服务
+
+### 1. 增加添加用户api
+
+```api
+syntax = "v1"
+
+type CreateReq {
+    Id string `json:"id"`
+    Name string `json:"name"`
+    Phone string `json:"phone"`
+}
+
+type CreateResp {
+    Msg string `json:"msg"`
+}
+
+type UserReq {
+    Id string `json:"id"`
+}
+
+type UserResp {
+    Id string `json:"id"`
+    Name string `json:"name"`
+    Phone string `json:"phone"`
+}
+
+service User {
+    // createUser 添加用户
+    @handler createUser
+    post /user (CreateReq) returns (CreateResp)
+
+    // getUser 获取用户
+    @handler getUser
+    get /user (UserReq) returns (UserResp)
+}
+
+```
+
+### 2. 生成对应的api服务接口
+
+```bash
+goctl api go -api user.api -dir . style = gozero
+```
+
+### 3. 编写对应的逻辑
+```go
+
+func (l *CreateUserLogic) CreateUser(req *types.CreateReq) (resp *types.CreateResp, err error) {
+	user, err := l.svcCtx.User.CreateUser(l.ctx, &userclient.CreateReq{
+		Id:    req.Id,
+		Name:  req.Name,
+		Phone: req.Phone,
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &user.CreateResp{Msg: "ok"}, nil
+	return &types.CreateResp{Msg: user.Msg}, nil
 }
-
 ```

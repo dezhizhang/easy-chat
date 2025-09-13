@@ -3,6 +3,16 @@
 
 package types
 
+type CreateReq struct {
+	Id    string `json:"id"`
+	Name  string `json:"name"`
+	Phone string `json:"phone"`
+}
+
+type CreateResp struct {
+	Msg string `json:"msg"`
+}
+
 type UserReq struct {
 	Id string `json:"id"`
 }
