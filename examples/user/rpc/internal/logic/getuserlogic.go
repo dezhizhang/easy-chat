@@ -2,10 +2,8 @@ package logic
 
 import (
 	"context"
-
 	"easy-chat/examples/user/rpc/internal/svc"
 	"easy-chat/examples/user/rpc/user"
-
 	"github.com/zeromicro/go-zero/core/logx"
 )
 
@@ -25,10 +23,14 @@ func NewGetUserLogic(ctx context.Context, svcCtx *svc.ServiceContext) *GetUserLo
 
 // GetUser rpc 服务处理逻辑
 func (l *GetUserLogic) GetUser(in *user.UserReq) (*user.UserResp, error) {
-
+	out, err := l.svcCtx.UserModel.FindOne(l.ctx, in.Id)
+	if err != nil {
+		return nil, err
+	}
 	return &user.UserResp{
-		Id:    "123456",
-		Name:  "tom",
-		Phone: "159924****8",
+		Id:    out.Id,
+		Name:  out.Name,
+		Phone: out.Phone,
 	}, nil
+
 }

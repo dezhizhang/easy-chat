@@ -30,3 +30,12 @@ service User {
 	get /user (UserReq) returns (UserResp)
 }
 
+// 增加中间件
+@server (
+	middleware: LoginVerify
+)
+service User {
+	@handler getUserInfo
+	get /user/info (UserReq) returns (UserResp)
+}
+
