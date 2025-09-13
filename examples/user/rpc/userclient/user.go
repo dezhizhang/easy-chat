@@ -14,10 +14,15 @@ import (
 )
 
 type (
-	UserReq  = user.UserReq
-	UserResp = user.UserResp
+	CreateReq  = user.CreateReq
+	CreateResp = user.CreateResp
+	UserReq    = user.UserReq
+	UserResp   = user.UserResp
 
 	User interface {
+		// CreateUser 创建用户信息
+		CreateUser(ctx context.Context, in *CreateReq, opts ...grpc.CallOption) (*CreateResp, error)
+		// GetUser  获取用户信息
 		GetUser(ctx context.Context, in *UserReq, opts ...grpc.CallOption) (*UserResp, error)
 	}
 
@@ -32,6 +37,13 @@ func NewUser(cli zrpc.Client) User {
 	}
 }
 
+// CreateUser 创建用户信息
+func (m *defaultUser) CreateUser(ctx context.Context, in *CreateReq, opts ...grpc.CallOption) (*CreateResp, error) {
+	client := user.NewUserClient(m.cli.Conn())
+	return client.CreateUser(ctx, in, opts...)
+}
+
+// GetUser  获取用户信息
 func (m *defaultUser) GetUser(ctx context.Context, in *UserReq, opts ...grpc.CallOption) (*UserResp, error) {
 	client := user.NewUserClient(m.cli.Conn())
 	return client.GetUser(ctx, in, opts...)

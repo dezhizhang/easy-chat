@@ -23,6 +23,13 @@ func NewUserServer(svcCtx *svc.ServiceContext) *UserServer {
 	}
 }
 
+// CreateUser 创建用户信息
+func (s *UserServer) CreateUser(ctx context.Context, in *user.CreateReq) (*user.CreateResp, error) {
+	l := logic.NewCreateUserLogic(ctx, s.svcCtx)
+	return l.CreateUser(in)
+}
+
+// GetUser  获取用户信息
 func (s *UserServer) GetUser(ctx context.Context, in *user.UserReq) (*user.UserResp, error) {
 	l := logic.NewGetUserLogic(ctx, s.svcCtx)
 	return l.GetUser(in)

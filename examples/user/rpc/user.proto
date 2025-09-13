@@ -5,6 +5,16 @@ package user;
 option go_package = "./user";
 
 
+message CreateReq {
+  string id = 1;
+  string name = 2;
+  string phone = 3;
+}
+
+message CreateResp {
+  string msg = 1;
+}
+
 message  UserReq {
   string id = 1;
 }
@@ -16,5 +26,9 @@ message UserResp {
 }
 
 service User{
+  // CreateUser 创建用户信息
+  rpc CreateUser(CreateReq) returns(CreateResp);
+  //GetUser  获取用户信息
   rpc GetUser(UserReq) returns(UserResp);
+
 }

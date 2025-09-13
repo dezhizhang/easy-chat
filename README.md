@@ -127,12 +127,155 @@ func (l *GetUserLogic) GetUser(req *types.UserReq) (resp *types.UserResp, err er
 ```go
 // GetUser rpc 服务处理逻辑
 func (l *GetUserLogic) GetUser(in *user.UserReq) (*user.UserResp, error) {
+    return &user.UserResp{
+        Id:    "123456",
+        Name:  "tom",
+        Phone: "159924****8",
+    }, nil
+}
+```
+## 数据库的操作
 
-return &user.UserResp{
-Id:    "123456",
-Name:  "tom",
-Phone: "159924****8",
-}, nil
+### 1. 编写操作的sql文件并生成对应的操作数据库接口
+```bash
+CREATE TABLE `users`
+(
+    `id`         varchar(24) COLLATE utf8mb4_unicode_ci  NOT NULL,
+    `avatar`     varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+    `name`       varchar(24) COLLATE utf8mb4_unicode_ci  NOT NULL DEFAULT '',
+    `phone`      varchar(20) COLLATE utf8mb4_unicode_ci  NOT NULL DEFAULT '',
+    `password`   varchar(191) COLLATE utf8mb4_unicode_ci          DEFAULT NULL,
+    `status`     int(10) DEFAULT NULL,
+    `created_at` timestamp NULL DEFAULT NULL,
+    `updated_at` timestamp NULL DEFAULT NULL,
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+```bash
+# -c是增加缓存
+goctl model mysql ddl -src user.sql -dir . -c 
+```
+### 2. proto文件增加添加用户接口
+```protobuf
+syntax = "proto3";
+
+package user;
+
+option go_package = "./user";
+
+
+message CreateReq {
+  string id = 1;
+  string name = 2;
+  string phone = 3;
+}
+
+message CreateResp {
+  string msg = 1;
+}
+
+message  UserReq {
+  string id = 1;
+}
+
+message UserResp {
+  string id = 1;
+  string name = 2;
+  string phone = 3;
+}
+
+service User{
+  // CreateUser 创建用户信息
+  rpc CreateUser(CreateReq) returns(CreateResp);
+  //GetUser  获取用户信息
+  rpc GetUser(UserReq) returns(UserResp);
+
+}
+```
+### 3. 生成对应的rpc接口
+```bash
+goctl rpc protoc user.proto --go_out=. --go-grpc_out=. --zrpc_out=.  #通过proto生成服务
+```
+
+### 3. 添加etc请求配置
+```yaml
+Name: user.rpc
+ListenOn: 0.0.0.0:8080
+
+Etcd:
+  Hosts:
+    - 127.0.0.1:2379
+  Key: user.rpc
+
+Mysql:
+  DataSource: root:V4Nn9fa#Xf!@tpc(127.0.0.1:3306)/user?charset=utf8mb4
+
+Cache:
+  - Host: 127.0.0.1:6379
+    Type: node
+    Pass:
+
+```
+### 4. 添加配置结构体
+```go
+package config
+
+import (
+	"github.com/zeromicro/go-zero/core/stores/cache"
+	"github.com/zeromicro/go-zero/zrpc"
+)
+
+type Config struct {
+	zrpc.RpcServerConf
+	// mysql配置
+	Mysql struct {
+		DataSource string
+	}
+	// redis配置
+	Cache cache.CacheConf
+}
+
+```
+### 5. 添加svc 上下文
+```go
+package svc
+
+import (
+	"easy-chat/examples/user/model"
+	"easy-chat/examples/user/rpc/internal/config"
+	"github.com/zeromicro/go-zero/core/stores/sqlx"
+)
+
+type ServiceContext struct {
+	Config config.Config
+	// mysql 连接信息
+	UserModel model.UsersModel
+}
+
+func NewServiceContext(c config.Config) *ServiceContext {
+	conn := sqlx.NewMysql(c.Mysql.DataSource)
+	return &ServiceContext{
+		Config: c,
+		// mysql和redis配置
+		UserModel: model.NewUsersModel(conn, c.Cache),
+	}
+}
+```
+### 6. logic增加用户逻辑
+```go
+// CreateUser  创建用户信息
+func (l *CreateUserLogic) CreateUser(in *user.CreateReq) (*user.CreateResp, error) {
+	_, err := l.svcCtx.UserModel.Insert(l.ctx, &model.Users{
+		Id:    in.Id,
+		Name:  in.Name,
+		Phone: in.Phone,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &user.CreateResp{Msg: "ok"}, nil
 }
 
 ```
