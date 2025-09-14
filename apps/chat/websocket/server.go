@@ -23,7 +23,21 @@ func NewServer(add string) *Server {
 }
 
 func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
+	// 处理服务异常
+	defer func() {
+		if err := recover(); err != nil {
+			s.Error("server handler panic:", err)
+		}
+	}()
 
+	_, err := s.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		s.Errorf("upgrader error: %v", err)
+		return
+	}
+
+	// 根据连接对像获取请求信息
+	
 }
 
 // Start 启动服务
