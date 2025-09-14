@@ -2,23 +2,32 @@ package websocket
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/websocket"
 	"github.com/zeromicro/go-zero/core/logx"
 	"net/http"
+	"sync"
 )
 
 type Server struct {
-	add      string
-	upgrader websocket.Upgrader
+	add string
 	logx.Logger
+	sync.RWMutex
+	upgrader   websocket.Upgrader
+	routes     map[string]HandlerFunc
+	connToUser map[*websocket.Conn]string
+	userToConn map[string]*websocket.Conn
 }
 
 func NewServer(add string) *Server {
 	return &Server{
-		add:      add,
-		upgrader: websocket.Upgrader{},
-		Logger:   logx.WithContext(context.Background()),
+		add:        add,
+		upgrader:   websocket.Upgrader{},
+		routes:     make(map[string]HandlerFunc),
+		connToUser: make(map[*websocket.Conn]string),
+		userToConn: make(map[string]*websocket.Conn),
+		Logger:     logx.WithContext(context.Background()),
 	}
 }
 
@@ -30,14 +39,51 @@ func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	_, err := s.upgrader.Upgrade(w, r, nil)
+	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		s.Errorf("upgrader error: %v", err)
 		return
 	}
 
 	// 根据连接对像获取请求信息
-	
+	go s.HandlerConn(conn)
+}
+
+func (s *Server) AddConn(conn *websocket.Conn, req *http.Request) {
+
+}
+
+// HandlerConn 根据连接对像执行任务处理
+func (s *Server) HandlerConn(conn *websocket.Conn) {
+	for {
+
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			s.Errorf("websocket conn message error: %v", err)
+			//todo
+			break
+		}
+
+		var message Message
+		if err = json.Unmarshal(msg, &message); err != nil {
+			s.Errorf("websocket conn message error: %v", err)
+			break
+		}
+		// 根据请求的method分发路由并执行
+		if handler, ok := s.routes[message.Method]; ok {
+			handler(s, conn, &message)
+		} else {
+			conn.WriteMessage(websocket.CloseMessage, []byte(fmt.Sprintf("不存在执行的方法%v ", message.Method)))
+		}
+
+	}
+}
+
+// AddRoutes 添加路由方法
+func (s *Server) AddRoutes(rs []Route) {
+	for _, r := range rs {
+		s.routes[r.Method] = r.Handler
+	}
 }
 
 // Start 启动服务
