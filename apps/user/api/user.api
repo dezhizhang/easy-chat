@@ -1,0 +1,48 @@
+syntax = "v1"
+
+// 注册请求类型
+type RegisterReq {
+	phone    string `json:"phone"` // 手机号
+	nickname string `json:"nickname"` // 呢称
+	username string `json:"username"` // 姓名
+	password string `json:"password"` // 密码
+	avatar   string `json:"avatar"`
+	gender   int64  `json:"gender"` // 姓别
+}
+
+// 注册响应类型
+type RegisterResp {}
+
+// 登录请求类型
+type LoginReq {}
+
+// 登录响应体
+type LoginResp {}
+
+type UserInfoReq {}
+
+type UserInfoResp {}
+
+@server (
+	prefix: /api/v1
+)
+service user {
+	@doc "用户注册"
+	@handler register
+	post /register (RegisterReq) returns (RegisterResp)
+
+	@doc "用户登录"
+	@handler login
+	post /login (LoginReq) returns (LoginResp)
+}
+
+@server (
+	prefix: /api/v1
+	jwt:    Auth
+)
+service user {
+	@doc "获取用户信息"
+	@handler userInfo
+	get /user/:id (UserInfoReq) returns (UserInfoResp)
+}
+

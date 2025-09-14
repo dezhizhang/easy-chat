@@ -357,3 +357,7 @@ func (l *CreateUserLogic) CreateUser(req *types.CreateReq) (resp *types.CreateRe
 	return &types.CreateResp{Msg: user.Msg}, nil
 }
 ```
+## mongodb的生成
+```bash
+goctl model mongo -type User -c dir .
+```
