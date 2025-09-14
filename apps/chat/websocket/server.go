@@ -14,20 +14,22 @@ type Server struct {
 	add string
 	logx.Logger
 	sync.RWMutex
-	upgrader   websocket.Upgrader
-	routes     map[string]HandlerFunc
-	connToUser map[*websocket.Conn]string
-	userToConn map[string]*websocket.Conn
+	authentication Authentication
+	upgrader       websocket.Upgrader
+	routes         map[string]HandlerFunc
+	connToUser     map[*websocket.Conn]string
+	userToConn     map[string]*websocket.Conn
 }
 
 func NewServer(add string) *Server {
 	return &Server{
-		add:        add,
-		upgrader:   websocket.Upgrader{},
-		routes:     make(map[string]HandlerFunc),
-		connToUser: make(map[*websocket.Conn]string),
-		userToConn: make(map[string]*websocket.Conn),
-		Logger:     logx.WithContext(context.Background()),
+		add:            add,
+		upgrader:       websocket.Upgrader{},
+		authentication: new(authentication),
+		routes:         make(map[string]HandlerFunc),
+		connToUser:     make(map[*websocket.Conn]string),
+		userToConn:     make(map[string]*websocket.Conn),
+		Logger:         logx.WithContext(context.Background()),
 	}
 }
 
@@ -49,8 +51,20 @@ func (s *Server) ServerWs(w http.ResponseWriter, r *http.Request) {
 	go s.HandlerConn(conn)
 }
 
+// AddConn 添加连接池
 func (s *Server) AddConn(conn *websocket.Conn, req *http.Request) {
+	uid := s.authentication.UserId(req)
+	s.RWMutex.Lock()
+	defer s.RWMutex.Unlock()
+	s.connToUser[conn] = uid
+	s.userToConn[uid] = conn
+}
 
+// GetConn 获取连接对像
+func (s *Server) GetConn(uid string) *websocket.Conn {
+	s.RWMutex.RLock()
+	defer s.RWMutex.RUnlock()
+	return s.userToConn[uid]
 }
 
 // HandlerConn 根据连接对像执行任务处理
