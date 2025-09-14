@@ -23,7 +23,7 @@ func NewLoginLogic(ctx context.Context, svcCtx *svc.ServiceContext) *LoginLogic 
 	}
 }
 
-// 用户用户登录
+// Login 登录
 func (l *LoginLogic) Login(in *user.LoginReq) (*user.LoginResp, error) {
 	// todo: add your logic here and delete this line
 

@@ -4,63 +4,77 @@ package user;
 
 option go_package = "./user";
 
-message User{
+
+message UserEntity{
   string id = 1; // 用户id
   string avatar = 2; // 头像
-  string username = 3; // 用户名
-  string phone = 4; // 手机号
-  int32 status = 5; // 是否锁住
-  int32 sex = 6; // 性别
+  string nickname = 3; // 呢称
+  string username = 4;
+  string phone = 5; // 手机号
+  int32  status = 6; // 状态
+  int32  gender = 7; // 性别
 }
 
-message Request {
+message PingReq {
   string ping = 1;
 }
 
-message Response {
+message PingResp {
   string pong = 1;
 }
 
+//LoginReq 登录请求体
 message LoginReq {
   string phone = 1;
   string password = 2;
 }
 
+//LoginResp 登录响应体
 message LoginResp {
   string token = 1;
-  int64 expire = 2;
+  int32 expire = 2;
 }
 
+//RegisterReq 用户注册请求体
 message RegisterReq {
   string phone = 1;
-  string username = 2;
-  string password = 3;
-  string avatar = 4;
-  int32  sex = 5;
-
+  string nickname = 2;
+  string username = 3;
+  string password = 4;
+  string avatar = 5;
+  int32  gender = 6;
 }
 
-message RegisterResp{
+// 注册响应体
+message RegisterResp {
   string token = 1;
-  int64 expire = 2;
+  int32 expire = 2;
 }
 
-message UserInfoReq{
+// UserInfoReq 查找用户
+message UserInfoReq {
   string id = 1;
 }
-
-message UserInfoResp{
-  User user = 1;
+// UserInfoResp 用户响应体
+message UserInfoResp {
+  UserEntity user = 1;
 }
 
-
-service user{
-  // Ping 测试是否通的服务
-  rpc Ping(Request) returns(Response);
-  // Login 用户用户登录
+service User {
+  // Ping 是否通
+  rpc Ping(PingReq) returns(PingResp);
+  // Login 登录
   rpc Login(LoginReq) returns(LoginResp);
-  // Register 用户注册
+  // Register 注册
   rpc Register(RegisterReq) returns(RegisterResp);
   // GetUserInfo 获取用户信息
   rpc GetUserInfo(UserInfoReq) returns(UserInfoResp);
 }
+
+
+
+
+
+
+
+

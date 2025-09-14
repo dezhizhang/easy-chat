@@ -23,8 +23,10 @@ func NewPingLogic(ctx context.Context, svcCtx *svc.ServiceContext) *PingLogic {
 	}
 }
 
-// Ping 测试是否通的服务
-func (l *PingLogic) Ping(in *user.Request) (*user.Response, error) {
+// Ping 是否通
+func (l *PingLogic) Ping(in *user.PingReq) (*user.PingResp, error) {
 
-	return &user.Response{Pong: "hello shuqin esay-chat"}, nil
+	return &user.PingResp{
+		Pong: "hello world",
+	}, nil
 }
